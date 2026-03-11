@@ -29,3 +29,10 @@ expo install expo-linear-gradient expo-blur expo-av @react-native-community/slid
 ```bash
 npm start
 ```
+
+## Running With IOS and Expo Go App
+
+```bash
+npx expo start --tunnel
+```
+Scan QR code and it should open on the Expo Go App
