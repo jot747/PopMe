@@ -13,7 +13,6 @@ import {
 
 import { SubtaskOrbit } from '@/components/SubtaskOrbit';
 import { Subtask } from '@/types/task';
-import { playPopFeedback } from '@/utils/pop-feedback';
 
 export type BubbleProps = {
   title: string;
@@ -136,10 +135,7 @@ export const Bubble = ({
 
   const shadowStyle = useMemo(
     () => ({
-      shadowColor: colorPair.to[0],
-      shadowOffset: { width: 0, height: 8 },
-      shadowOpacity: 0.28,
-      shadowRadius: 16,
+    boxShadow: '0 8 16 rgb(14 26 42 / 28%',
       elevation: 8,
     }),
     [colorPair.to]
@@ -147,7 +143,6 @@ export const Bubble = ({
 
   const handlePop = () => {
     if (!onPop) return;
-    playPopFeedback();
     Animated.parallel([
       Animated.timing(popScale, {
         toValue: 0.2,

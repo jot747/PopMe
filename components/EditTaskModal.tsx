@@ -1,4 +1,3 @@
-import DateTimePicker from '@react-native-community/datetimepicker';
 import Slider from '@react-native-community/slider';
 import { BlurView } from 'expo-blur';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
@@ -40,7 +39,6 @@ export const EditTaskModal = ({
   const [draftPriority, setDraftPriority] = useState(3);
   const [draftEnergy, setDraftEnergy] = useState(3);
   const [draftDueDate, setDraftDueDate] = useState<Date | null>(null);
-  const [showPicker, setShowPicker] = useState(false);
   const [subtaskDraft, setSubtaskDraft] = useState('');
   const [showSubtaskPrompt, setShowSubtaskPrompt] = useState(false);
   const [showDatePrompt, setShowDatePrompt] = useState(false);
@@ -226,30 +224,6 @@ export const EditTaskModal = ({
           </Animated.View>
         </View>
 
-        {showPicker && (
-          <Modal transparent animationType="fade">
-            <View style={styles.pickerOverlay}>
-              <View style={styles.pickerCard}>
-                <DateTimePicker
-                  value={draftDueDate ?? new Date()}
-                  mode="date"
-                  display={Platform.select({ ios: 'spinner', android: 'default' })}
-                  onChange={(_, date) => {
-                    if (Platform.OS !== 'ios') setShowPicker(false);
-                    if (date) {
-                      setDraftDueDate(date);
-                      setDateDraft(date.toISOString().slice(0, 10));
-                    }
-                  }}
-                />
-                <Pressable onPress={() => setShowPicker(false)} style={styles.pickerClose}>
-                  <Text style={styles.pickerCloseText}>Done</Text>
-                </Pressable>
-              </View>
-            </View>
-          </Modal>
-        )}
-
         {showDatePrompt && (
           <Modal transparent animationType="fade">
             <View style={styles.pickerOverlay}>
@@ -266,9 +240,6 @@ export const EditTaskModal = ({
                   keyboardType={Platform.select({ ios: 'numbers-and-punctuation', android: 'numeric' })}
                 />
                 <View style={styles.datePromptActions}>
-                  <Pressable onPress={() => setShowPicker(true)} style={styles.promptCancel}>
-                    <Text style={styles.promptCancelText}>Pick</Text>
-                  </Pressable>
                   <Pressable onPress={() => setShowDatePrompt(false)} style={styles.promptCancel}>
                     <Text style={styles.promptCancelText}>Cancel</Text>
                   </Pressable>
@@ -338,10 +309,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F9FBFF',
     borderRadius: 28,
     padding: 22,
-    shadowColor: '#0E1A2A',
-    shadowOpacity: 0.25,
-    shadowRadius: 24,
-    shadowOffset: { width: 0, height: 12 },
+    boxShadow: '0 12 24 rgb(14 26 42 / 25%',
     elevation: 10,
     width: 320,
     height: '70%',

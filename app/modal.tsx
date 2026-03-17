@@ -88,10 +88,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     backgroundColor: '#FFFFFF',
     padding: 18,
-    shadowColor: '#0E1A2A',
-    shadowOpacity: 0.2,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 8 },
+    boxShadow: '0 8 16 rgb(14 26 42 / 20%',
     elevation: 8,
   },
   confirmTitle: {
@@ -181,10 +178,7 @@ const styles = StyleSheet.create({
     padding: 14,
     borderRadius: 16,
     backgroundColor: '#FFFFFF',
-    shadowColor: '#0E1A2A',
-    shadowOpacity: 0.08,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
+    boxShadow: '0 8 16 rgb(14 26 42 / 20%',
     elevation: 4,
   },
   rowInfo: {

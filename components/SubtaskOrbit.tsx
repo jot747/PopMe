@@ -20,7 +20,7 @@ export const SubtaskOrbit = ({
   const bubbleSize = Math.max(32, Math.min(48, parentSize * 0.36));
 
   return (
-    <View pointerEvents="none" style={styles.container}>
+    <View style={styles.container}>
       {subtasks.slice(0, maxBubbles).map((subtask, index) => {
         const angle = - (Math.PI * index) / maxBubbles - 3 / 4 * Math.PI ;
         const x = radius * Math.cos(angle) - bubbleSize / 2;
@@ -65,10 +65,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.5)',
-    shadowColor: '#1D2733',
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
+    boxShadow: '0 4 8 rgb(29 39 51 / 12%',
     elevation: 4,
   },
   gradient: {
