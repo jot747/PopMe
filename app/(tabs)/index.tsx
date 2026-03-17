@@ -157,7 +157,7 @@ export default function HomeScreen() {
         task={editingTask}
         onClose={() => setEditingId(null)}
         onSave={(taskId, updates) => updateTask(taskId, updates)}
-        onDelete={(taskId) => {
+        onDiscard={(taskId) => {
           markTaskStatus(taskId, 'completed');
           setEditingId(null);
         }}

@@ -1,3 +1,6 @@
+import DateTimePicker from '@react-native-community/datetimepicker';
+import Slider from '@react-native-community/slider';
+import { BlurView } from 'expo-blur';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
@@ -10,21 +13,18 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import Slider from '@react-native-community/slider';
-import DateTimePicker from '@react-native-community/datetimepicker';
-import { BlurView } from 'expo-blur';
 
 import { Bubble } from '@/components/Bubble';
 import { Task } from '@/types/task';
-import { formatDate, toIsoDate } from '@/utils/date';
 import { getBubbleSize, getEnergyColors } from '@/utils/bubble';
+import { formatDate, toIsoDate } from '@/utils/date';
 
 export type EditTaskModalProps = {
   visible: boolean;
   task: Task | null;
   onClose: () => void;
   onSave: (taskId: string, updates: Partial<Task>) => void;
-  onDelete: (taskId: string) => void;
+  onDiscard: (taskId: string) => void;
   onAddSubtask: (taskId: string, title: string) => void;
 };
 
@@ -33,7 +33,7 @@ export const EditTaskModal = ({
   task,
   onClose,
   onSave,
-  onDelete,
+  onDiscard,
   onAddSubtask,
 }: EditTaskModalProps) => {
   const [draftTitle, setDraftTitle] = useState('');
@@ -216,8 +216,8 @@ export const EditTaskModal = ({
             </ScrollView>
 
             <View style={styles.footer}>
-              <Pressable onPress={() => onDelete(task.id)} style={styles.deleteButton}>
-                <Text style={styles.deleteText}>Delete</Text>
+              <Pressable onPress={() => onDiscard(task.id)} style={styles.discardButton}>
+                <Text style={styles.discardText}>Discard Changes</Text>
               </Pressable>
               <Pressable onPress={handleSave} style={styles.saveButton}>
                 <Text style={styles.saveText}>Save Changes</Text>
@@ -519,14 +519,14 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '600',
   },
-  deleteButton: {
+  discardButton: {
     flex: 1,
     paddingVertical: 12,
     borderRadius: 14,
     backgroundColor: 'rgba(255, 115, 115, 0.2)',
     alignItems: 'center',
   },
-  deleteText: {
+  discardText: {
     color: '#B24040',
     fontWeight: '600',
   },
