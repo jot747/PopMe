@@ -24,7 +24,7 @@ import { layoutBubbles } from '@/utils/layout';
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { tasks, addTask, updateTask, markTaskStatus, addSubtask } = useTasks();
+  const { tasks, addTask, updateTask, markTaskStatus, addSubtask, removeSubtask } = useTasks();
 
   const [inputValue, setInputValue] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
@@ -220,6 +220,7 @@ export default function HomeScreen() {
           setEditingId(null);
         }}
         onAddSubtask={addSubtask}
+        onRemoveSubtask={removeSubtask}
       />
 
       <FilterModal
