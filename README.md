@@ -18,23 +18,32 @@ PopMe is a playful to‑do app where tasks live as floating bubbles instead of a
 
 - Node.js 18+ recommended
 - Expo CLI (installed automatically via `npx expo`)
-## Install
+
+## Installation
+
+Run the following commands in command prompt
 
 ```bash
 npm install
+
 expo install expo-linear-gradient expo-blur expo-av @react-native-community/slider @react-native-community/datetimepicker
 ```
 
 ## Run
 
+To run the project, open command prompt and navigate to the project folder. You can grab the project address by opening the folder in your file explorer, right clicking on the address at the top, and clicking "Copy Address"
+
 ```bash
-npm start
+cd <ADDRESS>
+```
+
+Then, start up the application with the following command
+```bash
+npx expo start --tunnel
 ```
 
 Then open with:
-
-- iOS Simulator: press `i`
-- Android Emulator: press `a`
+- Website: press 'w'
 - Physical device: scan the QR code with Expo Go
 
 ## Project layout

@@ -1,4 +1,4 @@
-export type TaskStatus = 'active' | 'completed' | 'deleted';
+export type TaskStatus = 'active' | 'completed';
 
 export type Subtask = {
   id: string;

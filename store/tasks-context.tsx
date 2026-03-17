@@ -10,10 +10,11 @@ export type TaskUpdate = Partial<Omit<Task, 'id' | 'createdAt'>>;
 export type TasksContextValue = {
   tasks: Task[];
   addTask: (title: string, overrides?: Partial<Omit<Task, 'id' | 'title' | 'createdAt'>>) => string;
+  removeTask: (title: string) => void;
   updateTask: (id: string, updates: TaskUpdate) => void;
   markTaskStatus: (id: string, status: TaskStatus) => void;
   addSubtask: (taskId: string, title: string) => void;
-  toggleSubtask: (taskId: string, subtaskId: string) => void;
+  removeSubtask: (taskId: string, subtaskId: string) => void;
 };
 
 const TasksContext = createContext<TasksContextValue | undefined>(undefined);
@@ -58,6 +59,12 @@ export const TasksProvider = ({ children }: { children: React.ReactNode }) => {
     );
   }, []);
 
+  const removeTask = useCallback((id: string) => {
+    setTasks((prev) =>
+      prev.filter((task) => task.id !== id)
+    );
+  }, []);
+
   const markTaskStatus = useCallback((id: string, status: TaskStatus) => {
     setTasks((prev) =>
       prev.map((task) =>
@@ -89,15 +96,13 @@ export const TasksProvider = ({ children }: { children: React.ReactNode }) => {
     );
   }, []);
 
-  const toggleSubtask = useCallback((taskId: string, subtaskId: string) => {
+  const removeSubtask = useCallback((taskId: string, subtaskId: string) => {
     setTasks((prev) =>
       prev.map((task) =>
         task.id === taskId
           ? {
               ...task,
-              subtasks: task.subtasks.map((sub) =>
-                sub.id === subtaskId ? { ...sub, completed: !sub.completed } : sub
-              ),
+              subtasks: task.subtasks.filter((sub) => sub.id !== subtaskId),
               updatedAt: toIsoDate(new Date()),
             }
           : task
@@ -106,8 +111,8 @@ export const TasksProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const value = useMemo(
-    () => ({ tasks, addTask, updateTask, markTaskStatus, addSubtask, toggleSubtask }),
-    [tasks, addTask, updateTask, markTaskStatus, addSubtask, toggleSubtask]
+    () => ({ tasks, addTask, removeTask, updateTask, markTaskStatus, addSubtask, removeSubtask }),
+    [tasks, addTask, removeTask, updateTask, markTaskStatus, addSubtask, removeSubtask]
   );
 
   return <TasksContext.Provider value={value}>{children}</TasksContext.Provider>;

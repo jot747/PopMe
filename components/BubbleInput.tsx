@@ -1,7 +1,6 @@
-import React, { useRef } from 'react';
-import { LayoutChangeEvent, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Animated } from 'react-native';
+import React, { useRef } from 'react';
+import { Animated, LayoutChangeEvent, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 
 export type BubbleInputProps = {
   label?: string;
@@ -30,7 +29,7 @@ export const BubbleInput = ({ label = 'add task', onPress, onLayout }: BubbleInp
   };
 
   return (
-    <View style={styles.wrapper} pointerEvents="box-none">
+    <View style={styles.wrapper}>
       <Pressable
         onPress={onPress}
         onPressIn={animatePressIn}
@@ -78,10 +77,7 @@ const styles = StyleSheet.create({
     paddingTop: 0,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#1D2733',
-    shadowOpacity: 0.4,
-    shadowRadius: 40,
-    shadowOffset: { width: 0, height: 18 },
+    boxShadow: '0 18 40 rgb(29 39 51 / 40%',
     elevation: 28,
     overflow: 'hidden',
     borderWidth: 1,
@@ -93,7 +89,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     color: '#161A1F',
-    textTransform: 'lowercase',
     textAlign: 'center',
     letterSpacing: 0.6,
   },

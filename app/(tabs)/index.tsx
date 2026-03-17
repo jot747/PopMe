@@ -1,3 +1,5 @@
+import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
 import React, { useMemo, useState } from 'react';
 import {
   LayoutChangeEvent,
@@ -8,25 +10,27 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
 
 import { Bubble } from '@/components/Bubble';
 import { BubbleInput } from '@/components/BubbleInput';
 import { EditTaskModal } from '@/components/EditTaskModal';
+import { FilterModal, FilterOrderings, Filters } from '@/components/FilterModal';
 import { useTasks } from '@/store/tasks-context';
+import { Task } from '@/types/task';
 import { getBubbleSize, getEnergyColors } from '@/utils/bubble';
 import { layoutBubbles } from '@/utils/layout';
-import { Task } from '@/types/task';
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { tasks, addTask, updateTask, markTaskStatus, addSubtask } = useTasks();
+  const { tasks, addTask, updateTask, markTaskStatus, addSubtask, removeSubtask } = useTasks();
 
   const [inputValue, setInputValue] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showFilterModal, setShowFilterModal] = useState(false);
+  const [filter, setFilter] = useState("None");
+  const [filterOrder, setFilterOrder] = useState(0);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [fieldSize, setFieldSize] = useState({ width: 0, height: 0 });
@@ -35,14 +39,60 @@ export default function HomeScreen() {
   const [lastAddedId, setLastAddedId] = useState<string | null>(null);
 
   const activeTasks = useMemo(
-    () => tasks.filter((task) => task.status === 'active'),
-    [tasks]
+    () => {switch (filter) {
+      case Filters.NONE:
+        return tasks.filter((task) => task.status === 'active')
+      case Filters.DATE:
+        return tasks.filter((task) => task.status === 'active')
+                    .filter((task) => { if (task.dueDate !== null) {
+                                          let date = new Date(task.dueDate);
+                                          let now = new Date();
+                                          if (filterOrder === FilterOrderings.ASCENDING) {
+                                            return date.getDate() - now.getDate() < 7;
+                                          } 
+                                          else {
+                                            return date.getDate() - now.getDate() > 7;
+                                          }
+                                          }
+                                      });
+                    /*.sort((a, b) => {  if (a.dueDate === null) {
+                                  return 1;
+                                }
+                                if (b.dueDate === null) {
+                                  return -1;
+                                }
+                                if (a.dueDate < b.dueDate) {
+                                  return -1 * filterOrder;
+                                } 
+                                if (a.dueDate > b.dueDate) {
+                                  return 1 * filterOrder;
+                                }
+                                return 0;
+                              });*/
+      case Filters.PRIORITY:
+        return tasks.filter((task) => task.status === 'active')
+                    .filter((task) => filterOrder === FilterOrderings.ASCENDING ? task.priority < 3 : task.priority > 3);
+                    //.sort((a, b) => (a.priority - b.priority) * filterOrder);
+      case Filters.ENERGY:
+        return tasks.filter((task) => task.status === 'active')
+                    .filter((task) => filterOrder === FilterOrderings.ASCENDING ? task.energy < 3 : task.energy > 3);
+                    //.sort((a, b) => (a.energy - b.energy) * filterOrder);
+      default:
+        return tasks.filter((task) => task.status === 'active');
+      }
+    },
+    [filter, filterOrder, tasks]
   );
 
   const editingTask = useMemo(
     () => tasks.find((task) => task.id === editingId) ?? null,
     [editingId, tasks]
   );
+
+  const resetFilter = () => {
+    setFilter(Filters.NONE);
+    setFilterOrder(0);
+  }
 
   const handleFieldLayout = (event: LayoutChangeEvent) => {
     const { width, height, x, y } = event.nativeEvent.layout;
@@ -57,6 +107,7 @@ export default function HomeScreen() {
     setShowAddModal(false);
     setLastAddedId(id);
     setTimeout(() => setLastAddedId(null), 500);
+    resetFilter();
   };
 
   const positions = useMemo(() => {
@@ -85,9 +136,9 @@ export default function HomeScreen() {
         colors={getEnergyColors(task.energy)}
         subtasks={task.subtasks}
         selected={selectedId === task.id}
-        onPress={() => setSelectedId(task.id)}
-        onDoublePress={() => setEditingId(task.id)}
-        onPop={() => markTaskStatus(task.id, 'deleted')}
+        onPress={() => {setSelectedId(task.id);
+                        setEditingId(task.id)}}
+        onPop={() => markTaskStatus(task.id, 'completed')}
         spawnOffset={spawnOffset}
         style={{ position: 'absolute', left, top }}
       />
@@ -101,10 +152,17 @@ export default function HomeScreen() {
       end={{ x: 0.9, y: 1 }}
       style={styles.container}>
       <View style={[styles.header, { paddingTop: insets.top + 12 }]}> 
-        <Text style={styles.title}>PopMe</Text>
-        <Pressable onPress={() => router.push('/modal')} style={styles.recentButton}>
-          <Text style={styles.recentText}>Recent Tasks</Text>
+        <View>
+          <Text style={styles.title}>PopMe</Text>
+        </View>
+        <View style = {styles.cornerButtonContainer}>
+        <Pressable onPress={() => {resetFilter(), router.push('/modal')}} style={styles.cornerButton}>
+          <Text style={styles.cornerText}>Recent Tasks</Text>
         </Pressable>
+        <Pressable onPress={() => setShowFilterModal(true)} style={styles.cornerButton}>
+          <Text style={styles.cornerText}>Apply filter</Text>
+        </Pressable>
+        </View>
       </View>
 
       <View style={styles.field} onLayout={handleFieldLayout}>
@@ -112,12 +170,12 @@ export default function HomeScreen() {
         <View style={styles.glowBlobAlt} />
         {activeTasks.map(renderBubble)}
         {!activeTasks.length && (
-          <Text style={styles.emptyText}>Drop your first task in the bubble below.</Text>
+          <Text style={styles.emptyText}>Add your first task in the bubble below.</Text>
         )}
       </View>
 
       <BubbleInput
-        label="add task"
+        label="Tap to add a task"
         onPress={() => setShowAddModal(true)}
         onLayout={(event) => {
           const { x, y, width, height } = event.nativeEvent.layout;
@@ -157,11 +215,21 @@ export default function HomeScreen() {
         task={editingTask}
         onClose={() => setEditingId(null)}
         onSave={(taskId, updates) => updateTask(taskId, updates)}
-        onDelete={(taskId) => {
-          markTaskStatus(taskId, 'deleted');
+        onComplete={(taskId) => {
+          markTaskStatus(taskId, 'completed');
           setEditingId(null);
         }}
         onAddSubtask={addSubtask}
+        onRemoveSubtask={removeSubtask}
+      />
+
+      <FilterModal
+        visible={showFilterModal}
+        onClose={() => setShowFilterModal(false)}
+        onSave={(filter, order) => {setFilter(filter);
+                                    setFilterOrder(order);
+                                   }
+               }
       />
     </LinearGradient>
   );
@@ -172,23 +240,28 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 22,
+    flexDirection: "row",
+    paddingHorizontal: 22,  
+    justifyContent: "space-between",
   },
   title: {
     fontSize: 28,
     fontWeight: '700',
     color: '#1D2733',
   },
-  recentButton: {
+  cornerButtonContainer: {
+    flexDirection: 'row',
+  },
+  cornerButton: {
+    marginRight: 12,
     paddingHorizontal: 14,
     paddingVertical: 8,
-    borderRadius: 999,
+    borderRadius: 12,
     backgroundColor: 'rgba(29, 39, 51, 0.08)',
+    alignItems: 'center',
+    alignSelf: "flex-end"
   },
-  recentText: {
+  cornerText: {
     fontSize: 12,
     fontWeight: '600',
     color: '#1D2733',
@@ -242,10 +315,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     backgroundColor: '#FFFFFF',
     padding: 18,
-    shadowColor: '#0E1A2A',
-    shadowOpacity: 0.2,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 8 },
+    boxShadow: '0 8 16 rgb(14 26 42 / 20%',
     elevation: 8,
   },
   addTitle: {

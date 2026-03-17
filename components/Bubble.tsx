@@ -1,3 +1,4 @@
+import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
@@ -9,11 +10,9 @@ import {
   View,
   ViewStyle,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 
 import { SubtaskOrbit } from '@/components/SubtaskOrbit';
 import { Subtask } from '@/types/task';
-import { playPopFeedback } from '@/utils/pop-feedback';
 
 export type BubbleProps = {
   title: string;
@@ -136,36 +135,14 @@ export const Bubble = ({
 
   const shadowStyle = useMemo(
     () => ({
-      shadowColor: colorPair.to[0],
-      shadowOffset: { width: 0, height: 8 },
-      shadowOpacity: 0.28,
-      shadowRadius: 16,
+    boxShadow: '0 8 16 rgb(14 26 42 / 28%',
       elevation: 8,
     }),
     [colorPair.to]
   );
 
-  const handlePress = () => {
-    if (!onPress && !onDoublePress) return;
-
-    const now = Date.now();
-    if (lastTap.current && now - lastTap.current < 260) {
-      if (tapTimeout.current) clearTimeout(tapTimeout.current);
-      lastTap.current = null;
-      onDoublePress?.();
-      return;
-    }
-
-    lastTap.current = now;
-    tapTimeout.current = setTimeout(() => {
-      onPress?.();
-      lastTap.current = null;
-    }, 260);
-  };
-
   const handlePop = () => {
     if (!onPop) return;
-    playPopFeedback();
     Animated.parallel([
       Animated.timing(popScale, {
         toValue: 0.2,
@@ -187,7 +164,7 @@ export const Bubble = ({
   };
 
   return (
-    <Pressable onPress={handlePress} onLongPress={handlePop} delayLongPress={420} style={style}>
+    <Pressable onPress = {onPress} onLongPress={handlePop} delayLongPress={420} style={style}>
       <View style={styles.wrapper}>
         <SubtaskOrbit subtasks={subtasks} parentSize={size} colors={colors} />
         <Animated.View
@@ -249,5 +226,6 @@ const styles = StyleSheet.create({
     color: '#1D2733',
     fontSize: 13,
     fontWeight: '600',
+    userSelect: 'none',
   },
 });

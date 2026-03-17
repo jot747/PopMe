@@ -1,3 +1,5 @@
+import Slider from '@react-native-community/slider';
+import { BlurView } from 'expo-blur';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
@@ -10,22 +12,20 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import Slider from '@react-native-community/slider';
-import DateTimePicker from '@react-native-community/datetimepicker';
-import { BlurView } from 'expo-blur';
 
 import { Bubble } from '@/components/Bubble';
-import { Task } from '@/types/task';
-import { formatDate, toIsoDate } from '@/utils/date';
+import { Subtask, Task } from '@/types/task';
 import { getBubbleSize, getEnergyColors } from '@/utils/bubble';
+import { formatDate, toIsoDate } from '@/utils/date';
 
 export type EditTaskModalProps = {
   visible: boolean;
   task: Task | null;
   onClose: () => void;
   onSave: (taskId: string, updates: Partial<Task>) => void;
-  onDelete: (taskId: string) => void;
+  onComplete: (taskId: string) => void;
   onAddSubtask: (taskId: string, title: string) => void;
+  onRemoveSubtask: (taskId: string, subtaskId: string) => void;
 };
 
 export const EditTaskModal = ({
@@ -33,14 +33,15 @@ export const EditTaskModal = ({
   task,
   onClose,
   onSave,
-  onDelete,
+  onComplete,
   onAddSubtask,
+  onRemoveSubtask,
 }: EditTaskModalProps) => {
   const [draftTitle, setDraftTitle] = useState('');
   const [draftPriority, setDraftPriority] = useState(3);
   const [draftEnergy, setDraftEnergy] = useState(3);
   const [draftDueDate, setDraftDueDate] = useState<Date | null>(null);
-  const [showPicker, setShowPicker] = useState(false);
+  const [draftSubtasks, setDraftSubtasks] = useState<Subtask[]>([]);
   const [subtaskDraft, setSubtaskDraft] = useState('');
   const [showSubtaskPrompt, setShowSubtaskPrompt] = useState(false);
   const [showDatePrompt, setShowDatePrompt] = useState(false);
@@ -55,6 +56,7 @@ export const EditTaskModal = ({
     setDraftPriority(task.priority);
     setDraftEnergy(task.energy);
     setDraftDueDate(task.dueDate ? new Date(task.dueDate) : null);
+    setDraftSubtasks(task.subtasks);
     setSubtaskDraft('');
     setShowSubtaskPrompt(false);
     setShowDatePrompt(false);
@@ -104,6 +106,7 @@ export const EditTaskModal = ({
   const handleSave = () => {
     onSave(task.id, {
       title: draftTitle.trim() || task.title,
+      subtasks: draftSubtasks,
       priority: draftPriority,
       energy: draftEnergy,
       dueDate: draftDueDate ? toIsoDate(draftDueDate) : null,
@@ -112,11 +115,16 @@ export const EditTaskModal = ({
   };
 
   const handleAddSubtask = () => {
+    if (task.subtasks.length >= 6) return;
     const title = subtaskDraft.trim() || `Subtask ${task.subtasks.length + 1}`;
-    onAddSubtask(task.id, title);
+    setDraftSubtasks([...draftSubtasks, { id: `sub-${Date.now()}`, title: title, completed: false },]);
     setSubtaskDraft('');
     setShowSubtaskPrompt(false);
   };
+
+  const handleRemoveSubtask = (subtaskId: string) => {
+    setDraftSubtasks(draftSubtasks.filter((sub) => sub.id !== subtaskId));
+  }
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
@@ -128,7 +136,7 @@ export const EditTaskModal = ({
               title={draftTitle || 'Untitled'}
               size={previewSize}
               colors={previewColors}
-              subtasks={task.subtasks}
+              subtasks={draftSubtasks}
               floating={false}
             />
             <Pressable style={styles.addSubtaskBubble} onPress={() => setShowSubtaskPrompt(true)}>
@@ -140,7 +148,7 @@ export const EditTaskModal = ({
             <View style={styles.header}>
               <Text style={styles.title}>Edit Task</Text>
               <Pressable onPress={onClose} style={styles.closeButton}>
-                <Text style={styles.closeText}>Close</Text>
+                <Text style={styles.closeText}>Discard changes</Text>
               </Pressable>
             </View>
 
@@ -157,6 +165,43 @@ export const EditTaskModal = ({
                   placeholder="Rename task"
                   placeholderTextColor="rgba(29,39,51,0.4)"
                 />
+
+                <Text style={styles.label}>Subtasks</Text>
+                {draftSubtasks.slice(0, 6).map((subtask) => {
+                  const label = subtask.title.trim() || '...';
+
+                  return (
+                    <View style={styles.row}>
+                      <TextInput
+                        key={subtask.id}
+                        value={subtask.title}
+                        onChangeText={(input) => 
+                          setDraftSubtasks(draftSubtasks.map((sub) => 
+                            sub.id === subtask.id ? 
+                            {...subtask, title: input}
+                            : sub))
+                          }
+                        style={styles.input}
+                        placeholder="Rename subtask"
+                        placeholderTextColor="rgba(29,39,51,0.4)"
+                      />
+                      <Pressable
+                        onPress = { () => handleRemoveSubtask(subtask.id) }
+                        style={styles.closeButton}>
+                        <Text style={styles.closeText}>Pop!</Text>
+                      </Pressable>
+                    </View>
+                  );
+                })}
+                {draftSubtasks.length < 6 &&
+                <TextInput
+                  value={subtaskDraft}
+                  onChangeText={setSubtaskDraft}
+                  onSubmitEditing={handleAddSubtask}
+                  style={styles.input}
+                  placeholder="Add a subtask"
+                  placeholderTextColor="rgba(29,39,51,0.4)"
+                />}
 
               <Text style={styles.label}>Due date</Text>
               <Pressable onPress={() => setShowDatePrompt(true)} style={styles.dateButton}>
@@ -216,39 +261,15 @@ export const EditTaskModal = ({
             </ScrollView>
 
             <View style={styles.footer}>
-              <Pressable onPress={() => onDelete(task.id)} style={styles.deleteButton}>
-                <Text style={styles.deleteText}>Delete</Text>
+              <Pressable onPress={() => onComplete(task.id)} style={styles.discardButton}>
+                <Text style={styles.discardText}>Pop bubble!</Text>
               </Pressable>
               <Pressable onPress={handleSave} style={styles.saveButton}>
-                <Text style={styles.saveText}>Save Changes</Text>
+                <Text style={styles.saveText}>Save changes</Text>
               </Pressable>
             </View>
           </Animated.View>
         </View>
-
-        {showPicker && (
-          <Modal transparent animationType="fade">
-            <View style={styles.pickerOverlay}>
-              <View style={styles.pickerCard}>
-                <DateTimePicker
-                  value={draftDueDate ?? new Date()}
-                  mode="date"
-                  display={Platform.select({ ios: 'spinner', android: 'default' })}
-                  onChange={(_, date) => {
-                    if (Platform.OS !== 'ios') setShowPicker(false);
-                    if (date) {
-                      setDraftDueDate(date);
-                      setDateDraft(date.toISOString().slice(0, 10));
-                    }
-                  }}
-                />
-                <Pressable onPress={() => setShowPicker(false)} style={styles.pickerClose}>
-                  <Text style={styles.pickerCloseText}>Done</Text>
-                </Pressable>
-              </View>
-            </View>
-          </Modal>
-        )}
 
         {showDatePrompt && (
           <Modal transparent animationType="fade">
@@ -266,9 +287,6 @@ export const EditTaskModal = ({
                   keyboardType={Platform.select({ ios: 'numbers-and-punctuation', android: 'numeric' })}
                 />
                 <View style={styles.datePromptActions}>
-                  <Pressable onPress={() => setShowPicker(true)} style={styles.promptCancel}>
-                    <Text style={styles.promptCancelText}>Pick</Text>
-                  </Pressable>
                   <Pressable onPress={() => setShowDatePrompt(false)} style={styles.promptCancel}>
                     <Text style={styles.promptCancelText}>Cancel</Text>
                   </Pressable>
@@ -322,11 +340,12 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
   },
   stage: {
+    display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    justifyContent: 'flex-start',
-    gap: 44,
-    paddingTop: 70,
+    justifyContent: 'center',
+    gap: 75,
+    height: "90%",
   },
   previewDock: {
     alignItems: 'center',
@@ -335,17 +354,13 @@ const styles = StyleSheet.create({
     zIndex: 2,
   },
   card: {
+    flexShrink: 1,
     backgroundColor: '#F9FBFF',
     borderRadius: 28,
     padding: 22,
-    shadowColor: '#0E1A2A',
-    shadowOpacity: 0.25,
-    shadowRadius: 24,
-    shadowOffset: { width: 0, height: 12 },
+    boxShadow: '0 12 24 rgb(14 26 42 / 25%',
     elevation: 10,
     width: 320,
-    height: '70%',
-    maxHeight: '70%',
     overflow: 'hidden',
     zIndex: 1,
   },
@@ -519,14 +534,49 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '600',
   },
-  deleteButton: {
+    row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderRadius: 16,
+    backgroundColor: '#FFFFFF',
+    boxShadow: '0 8 16 rgb(14 26 42 / 20%',
+    elevation: 4,
+  },
+  rowInfo: {
+    flex: 1,
+    marginRight: 12,
+  },
+  rowTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#1D2733',
+    marginBottom: 4,
+  },
+  rowMeta: {
+    fontSize: 12,
+    color: '#6B7C93',
+  },
+  restoreButton: {
+    marginRight: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 12,
+    backgroundColor: 'rgba(29,39,51,0.08)',
+  },
+  restoreText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#1D2733',
+  },
+  discardButton: {
     flex: 1,
     paddingVertical: 12,
     borderRadius: 14,
     backgroundColor: 'rgba(255, 115, 115, 0.2)',
     alignItems: 'center',
   },
-  deleteText: {
+  discardText: {
     color: '#B24040',
     fontWeight: '600',
   },
