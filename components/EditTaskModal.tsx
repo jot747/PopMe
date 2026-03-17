@@ -23,7 +23,7 @@ export type EditTaskModalProps = {
   task: Task | null;
   onClose: () => void;
   onSave: (taskId: string, updates: Partial<Task>) => void;
-  onDiscard: (taskId: string) => void;
+  onComplete: (taskId: string) => void;
   onAddSubtask: (taskId: string, title: string) => void;
 };
 
@@ -32,7 +32,7 @@ export const EditTaskModal = ({
   task,
   onClose,
   onSave,
-  onDiscard,
+  onComplete,
   onAddSubtask,
 }: EditTaskModalProps) => {
   const [draftTitle, setDraftTitle] = useState('');
@@ -138,7 +138,7 @@ export const EditTaskModal = ({
             <View style={styles.header}>
               <Text style={styles.title}>Edit Task</Text>
               <Pressable onPress={onClose} style={styles.closeButton}>
-                <Text style={styles.closeText}>Close</Text>
+                <Text style={styles.closeText}>Discard changes</Text>
               </Pressable>
             </View>
 
@@ -214,11 +214,11 @@ export const EditTaskModal = ({
             </ScrollView>
 
             <View style={styles.footer}>
-              <Pressable onPress={() => onDiscard(task.id)} style={styles.discardButton}>
-                <Text style={styles.discardText}>Discard Changes</Text>
+              <Pressable onPress={() => onComplete(task.id)} style={styles.discardButton}>
+                <Text style={styles.discardText}>Pop bubble!</Text>
               </Pressable>
               <Pressable onPress={handleSave} style={styles.saveButton}>
-                <Text style={styles.saveText}>Save Changes</Text>
+                <Text style={styles.saveText}>Save changes</Text>
               </Pressable>
             </View>
           </Animated.View>

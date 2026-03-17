@@ -170,7 +170,7 @@ export default function HomeScreen() {
         <View style={styles.glowBlobAlt} />
         {activeTasks.map(renderBubble)}
         {!activeTasks.length && (
-          <Text style={styles.emptyText}>Drop your first task in the bubble below.</Text>
+          <Text style={styles.emptyText}>Add your first task in the bubble below.</Text>
         )}
       </View>
 
@@ -215,7 +215,7 @@ export default function HomeScreen() {
         task={editingTask}
         onClose={() => setEditingId(null)}
         onSave={(taskId, updates) => updateTask(taskId, updates)}
-        onDiscard={(taskId) => {
+        onComplete={(taskId) => {
           markTaskStatus(taskId, 'completed');
           setEditingId(null);
         }}
